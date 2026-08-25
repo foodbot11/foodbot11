@@ -1,0 +1,15 @@
+{
+  "name": "hospital-food-bot",
+  "version": "1.0.0",
+  "description": "WhatsApp Bot for Food Delivery",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "axios": "^1.6.2",
+    "google-spreadsheet": "^4.1.1",
+    "dotenv": "^16.3.1"
+  }
+}
