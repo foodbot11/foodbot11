@@ -30,9 +30,12 @@ app.post('/webhook', async (req, res) => {
             let msg_body = messageData.text.body; 
             let phone_number_id = process.env.PHONE_NUMBER_ID;
 
-            // Private Key Formatting Fix
+            // Indestructible Private Key Parser (Vercel Fix)
             let rawKey = process.env.GOOGLE_PRIVATE_KEY || "";
-            let formattedKey = rawKey.replace(/\\n/g, '\n').replace(/^"|"$/g, '').trim();
+            if (rawKey.startsWith('"') && rawKey.endsWith('"')) {
+                rawKey = rawKey.substring(1, rawKey.length - 1);
+            }
+            let formattedKey = rawKey.split('\\n').join('\n');
 
             const serviceAccountAuth = new JWT({
                 email: process.env.GOOGLE_CLIENT_EMAIL,
@@ -75,7 +78,7 @@ app.post('/webhook', async (req, res) => {
         }
         res.sendStatus(200);
     } catch (error) {
-        console.error(error);
+        console.error("Critical Error: ", error);
         res.sendStatus(500);
     }
 });
