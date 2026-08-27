@@ -20,33 +20,34 @@ app.get('/webhook', (req, res) => {
         res.sendStatus(403);
     }
 });
-
 // মেসেজ রিসিভ করা এবং রিপ্লাই দেওয়া
 app.post('/webhook', async (req, res) => {
+    // এই নতুন লাইনটা আমাদের বলে দেবে মেটা থেকে কী ডেটা আসছে
+    console.log("Incoming Webhook: ", JSON.stringify(req.body, null, 2)); 
+
     try {
         let body = req.body;
         
         if (body.object && body.entry && body.entry[0].changes && body.entry[0].changes[0].value.messages) {
             let messageData = body.entry[0].changes[0].value.messages[0];
-            let from = messageData.from; // কাস্টমারের হোয়াটসঅ্যাপ নম্বর
-            let msg_body = messageData.text.body; // কাস্টমারের পাঠানো মেসেজ
+            let from = messageData.from; 
+            let msg_body = messageData.text.body; 
             let phone_number_id = process.env.PHONE_NUMBER_ID;
 
             // ১. Google Sheet-এ ডেটা সেভ করার কাজ
             const serviceAccountAuth = new JWT({
                 email: process.env.GOOGLE_CLIENT_EMAIL,
-                key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'), // Vercel-এর পাসওয়ার্ড ঠিক করা
+                key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
                 scopes: ['https://www.googleapis.com/auth/spreadsheets'],
             });
             
             const doc = new GoogleSpreadsheet(process.env.SPREADSHEET_ID, serviceAccountAuth);
             await doc.loadInfo(); 
-            const sheet = doc.sheetsByIndex[0]; // প্রথম শিট সিলেক্ট করা
+            const sheet = doc.sheetsByIndex[0]; 
             
-            let orderId = "ORD-" + Math.floor(Math.random() * 10000); // অটোমেটিক অর্ডার আইডি তৈরি
+            let orderId = "ORD-" + Math.floor(Math.random() * 10000); 
             let time = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
 
-            // শিটের হেডিংয়ের সাথে মিলিয়ে ডেটা বসানো
             await sheet.addRow({
                 'ORDER ID': orderId,
                 'PRODUCT': msg_body, 
@@ -76,7 +77,7 @@ app.post('/webhook', async (req, res) => {
         }
         res.sendStatus(200);
     } catch (error) {
-        console.error(error);
+        console.error("Error occurred:", error);
         res.sendStatus(500);
     }
 });
