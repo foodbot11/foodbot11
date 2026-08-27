@@ -8,7 +8,6 @@ app.use(express.json());
 
 const VERIFY_TOKEN = "foodbot_secret_123";
 
-// Webhook Verification (Meta-র কানেকশন)
 app.get('/webhook', (req, res) => {
     let mode = req.query['hub.mode'];
     let token = req.query['hub.verify_token'];
@@ -20,11 +19,8 @@ app.get('/webhook', (req, res) => {
         res.sendStatus(403);
     }
 });
-// মেসেজ রিসিভ করা এবং রিপ্লাই দেওয়া
-app.post('/webhook', async (req, res) => {
-    // এই নতুন লাইনটা আমাদের বলে দেবে মেটা থেকে কী ডেটা আসছে
-    console.log("Incoming Webhook: ", JSON.stringify(req.body, null, 2)); 
 
+app.post('/webhook', async (req, res) => {
     try {
         let body = req.body;
         
@@ -34,10 +30,13 @@ app.post('/webhook', async (req, res) => {
             let msg_body = messageData.text.body; 
             let phone_number_id = process.env.PHONE_NUMBER_ID;
 
-            // ১. Google Sheet-এ ডেটা সেভ করার কাজ
+            // Private Key Formatting Fix
+            let rawKey = process.env.GOOGLE_PRIVATE_KEY || "";
+            let formattedKey = rawKey.replace(/\\n/g, '\n').replace(/^"|"$/g, '').trim();
+
             const serviceAccountAuth = new JWT({
                 email: process.env.GOOGLE_CLIENT_EMAIL,
-                key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+                key: formattedKey,
                 scopes: ['https://www.googleapis.com/auth/spreadsheets'],
             });
             
@@ -58,7 +57,6 @@ app.post('/webhook', async (req, res) => {
                 'DATE & TIME': time
             });
 
-            // ২. কাস্টমারকে WhatsApp-এ রিপ্লাই দেওয়া
             let replyMessage = `হ্যালো! আপনার মেসেজটি আমরা পেয়েছি। 🥳\n\n📝 *আপনার Order ID:* ${orderId}\nখুব শিগগিরই আমরা আপনার সাথে যোগাযোগ করছি!`;
 
             await axios({
@@ -77,7 +75,7 @@ app.post('/webhook', async (req, res) => {
         }
         res.sendStatus(200);
     } catch (error) {
-        console.error("Error occurred:", error);
+        console.error(error);
         res.sendStatus(500);
     }
 });
